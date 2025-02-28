@@ -1,9 +1,0 @@
-+ MemoryGame
-  ├── GameBoard
-  │     ├── Card
-  │     ├── Deck
-  ├── Player
-  ├── RankManager
-  ├── GameTimer
-  ├── GameUI (Swing GUI)
-  ├── MainMenu (Swing GUI)
