@@ -144,10 +144,8 @@ public class MemoryGame {
             JButton button = new JButton(options[i]);
             final int choice = i;
             button.addActionListener(e -> {
-                if (choice == 5) {
-                    System.exit(0);
-                } else if (choice == 4) {
-                    showRanks();
+                 if (choice == 4) {
+                    showRankMenu();
                 } else {
                     int rows = 4 + (choice * 2);
                     int cols = 4 + (choice * 2);
@@ -166,6 +164,47 @@ public class MemoryGame {
         }
 
         menuFrame.setVisible(true);
+    }
+
+    private static void showRankMenu() {
+        JFrame rankFrame = new JFrame("Rankings Menu");
+        rankFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        rankFrame.setSize(300, 300);
+        rankFrame.setLayout(new GridLayout(5, 1));
+
+        String[] rankOptions = {"Rank Easy", "Rank Normal", "Rank Hard", "Rank Nightmare", "Back to Menu"};
+
+        for (int i = 0; i < rankOptions.length; i++) {
+            JButton button = new JButton(rankOptions[i]);
+            final int choice = i;
+            button.addActionListener(e -> {
+                if (choice == 4) {
+                    rankFrame.dispose();
+                    showMenu();
+                } else {
+                    String difficulty = rankOptions[choice].replace("Rank ", "");
+                    showRanksByDifficulty(difficulty);
+                }
+            });
+            rankFrame.add(button);
+        }
+
+        rankFrame.setVisible(true);
+    }
+
+    private static void showRanksByDifficulty(String difficulty) {
+        StringBuilder ranks = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader("ranks.txt"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.startsWith(difficulty)) {
+                    ranks.append(line).append("\n");
+                }
+            }
+        } catch (IOException e) {
+            ranks.append("No rankings yet.");
+        }
+        JOptionPane.showMessageDialog(null, ranks.toString(), difficulty + " Rankings", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public static void main(String[] args) {
