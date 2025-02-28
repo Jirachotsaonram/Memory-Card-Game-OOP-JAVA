@@ -22,17 +22,17 @@ public class MemoryGame {
     private long startTime;
     private String difficulty;
 
-    public MemoryGame(int size, String level) {
-        this.gridSize = size;
+    public MemoryGame(int rows, int cols, String level) {
+        this.gridSize = rows * cols;
         this.difficulty = level;
         frame = new JFrame("Memory Game");
-        panel = new JPanel(new GridLayout(gridSize, gridSize));
-        buttons = new JButton[gridSize][gridSize];
-        images = new ImageIcon[gridSize * gridSize / 2];
-        board = new int[gridSize][gridSize];
+        panel = new JPanel(new GridLayout(rows, cols));
+        buttons = new JButton[rows][cols];
+        images = new ImageIcon[gridSize / 2];
+        board = new int[rows][cols];
         backIcon = new ImageIcon(new ImageIcon("cardback.png").getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH)); // โหลดและปรับขนาดรูปหลังไพ่
         loadImages();
-        setupBoard();
+        setupBoard(rows, cols);
         startTime = System.currentTimeMillis();
     }
 
@@ -42,16 +42,16 @@ public class MemoryGame {
         }
     }
 
-    private void setupBoard() {
+    private void setupBoard(int rows, int cols) {
         ArrayList<Integer> cardList = new ArrayList<>();
-        for (int i = 0; i < gridSize * gridSize / 2; i++) {
+        for (int i = 0; i < gridSize / 2; i++) {
             cardList.add(i);
             cardList.add(i);
         }
         Collections.shuffle(cardList);
 
-        for (int i = 0; i < gridSize; i++) {
-            for (int j = 0; j < gridSize; j++) {
+        for (int i = 0; i < buttons.length; i++) {
+            for (int j = 0; j < buttons[i].length; j++) {
                 board[i][j] = cardList.remove(0);
                 buttons[i][j] = new JButton(backIcon); // ตั้งค่าไอคอนเริ่มต้นเป็นรูปหลังไพ่
                 final int row = i, col = j;
@@ -61,10 +61,26 @@ public class MemoryGame {
         }
 
         frame.add(panel, BorderLayout.CENTER);
+        
+        JPanel buttonPanel = new JPanel();
         JButton restartButton = new JButton("Return Game");
         restartButton.addActionListener(e -> restartGame());
-        frame.add(restartButton, BorderLayout.SOUTH);
-        frame.setSize(600, 600);
+        buttonPanel.add(restartButton);
+
+        JButton backButton = new JButton("Back to Menu");
+        backButton.addActionListener(e -> {
+            frame.dispose();
+            showMenu();
+        });
+        buttonPanel.add(backButton);
+
+        frame.add(buttonPanel, BorderLayout.SOUTH);
+
+        // คำนวณขนาดของเฟรมตามขนาดของกริด
+        int frameWidth = cols * 100 + 50;
+        int frameHeight = rows * 100 + 150;
+        frame.setSize(frameWidth, frameHeight);
+
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
@@ -81,7 +97,7 @@ public class MemoryGame {
         } else {
             if (board[row][col] == board[firstRow][firstCol]) {
                 revealedPairs++;
-                if (revealedPairs == (gridSize * gridSize / 2)) {
+                if (revealedPairs == (gridSize / 2)) {
                     long endTime = System.currentTimeMillis();
                     long elapsedTime = (endTime - startTime) / 1000;
                     saveRank(elapsedTime);
@@ -104,7 +120,7 @@ public class MemoryGame {
 
     private void restartGame() {
         frame.dispose();
-        new MemoryGame(gridSize, difficulty);
+        showMenu();
     }
 
     private void saveRank(long time) {
@@ -116,34 +132,44 @@ public class MemoryGame {
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame menuFrame = new JFrame("Memory Game Menu");
-            menuFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            menuFrame.setSize(300, 300);
-            menuFrame.setLayout(new GridLayout(6, 1));
+    private static void showMenu() {
+        JFrame menuFrame = new JFrame("Memory Game Menu");
+        menuFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        menuFrame.setSize(300, 300);
+        menuFrame.setLayout(new GridLayout(6, 1));
 
-            String[] options = {"Easy (4x4)", "Normal (6x6)", "Hard (8x8)", "Nightmare (10x10)", "Ranks", "Exit"};
+        String[] options = {"Easy (4x4)", "Normal (6x6)", "Hard (6x11)", "Nightmare (6x17)", "Ranks", "Exit"};
 
-            for (int i = 0; i < options.length; i++) {
-                JButton button = new JButton(options[i]);
-                final int choice = i;
-                button.addActionListener(e -> {
-                    if (choice == 5) {
-                        System.exit(0);
-                    } else if (choice == 4) {
-                        showRanks();
-                    } else {
-                        int size = 4 + (choice * 2);
-                        new MemoryGame(size, options[choice]);
-                        menuFrame.dispose(); // ปิดเมนูหลังจากเริ่มเกม
+        for (int i = 0; i < options.length; i++) {
+            JButton button = new JButton(options[i]);
+            final int choice = i;
+            button.addActionListener(e -> {
+                if (choice == 5) {
+                    System.exit(0);
+                } else if (choice == 4) {
+                    showRanks();
+                } else {
+                    int rows = 4 + (choice * 2);
+                    int cols = 4 + (choice * 2);
+                    if (choice == 2) {
+                        rows = 6;
+                        cols = 11;
+                    } else if (choice == 3) {
+                        rows = 6;
+                        cols = 17;
                     }
-                });
-                menuFrame.add(button);
-            }
+                    new MemoryGame(rows, cols, options[choice]);
+                    menuFrame.dispose(); // ปิดเมนูหลังจากเริ่มเกม
+                }
+            });
+            menuFrame.add(button);
+        }
 
-            menuFrame.setVisible(true);
-        });
+        menuFrame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(MemoryGame::showMenu);
     }
 
     private static void showRanks() {
