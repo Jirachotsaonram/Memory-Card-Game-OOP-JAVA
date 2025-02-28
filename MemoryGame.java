@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.Timer;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -9,6 +11,7 @@ public class MemoryGame {
     private JPanel panel;
     private JButton[][] buttons;
     private ImageIcon[] images;
+    private ImageIcon backIcon; // เพิ่มตัวแปรสำหรับรูปหลังไพ่
     private int[][] board;
     private int firstRow = -1, firstCol = -1;
     private boolean firstCardFlipped = false;
@@ -27,6 +30,7 @@ public class MemoryGame {
         buttons = new JButton[gridSize][gridSize];
         images = new ImageIcon[gridSize * gridSize / 2];
         board = new int[gridSize][gridSize];
+        backIcon = new ImageIcon(new ImageIcon("cardback.png").getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH)); // โหลดและปรับขนาดรูปหลังไพ่
         loadImages();
         setupBoard();
         startTime = System.currentTimeMillis();
@@ -34,7 +38,7 @@ public class MemoryGame {
 
     private void loadImages() {
         for (int i = 0; i < images.length; i++) {
-            images[i] = new ImageIcon("img" + (i + 1) + ".png");
+            images[i] = new ImageIcon(new ImageIcon("img/" + (i + 1) + ".png").getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH)); // โหลดและปรับขนาดรูปภาพ
         }
     }
 
@@ -49,7 +53,7 @@ public class MemoryGame {
         for (int i = 0; i < gridSize; i++) {
             for (int j = 0; j < gridSize; j++) {
                 board[i][j] = cardList.remove(0);
-                buttons[i][j] = new JButton();
+                buttons[i][j] = new JButton(backIcon); // ตั้งค่าไอคอนเริ่มต้นเป็นรูปหลังไพ่
                 final int row = i, col = j;
                 buttons[i][j].addActionListener(e -> revealCard(row, col));
                 panel.add(buttons[i][j]);
@@ -66,9 +70,9 @@ public class MemoryGame {
     }
 
     private void revealCard(int row, int col) {
-        if (buttons[row][col].getIcon() != null) return;
+        if (buttons[row][col].getIcon() != backIcon) return; // ตรวจสอบว่าการ์ดยังไม่ถูกเปิด
 
-        buttons[row][col].setIcon(images[board[row][col]]);
+        buttons[row][col].setIcon(images[board[row][col]]); // แสดงรูปการ์ด
 
         if (!firstCardFlipped) {
             firstRow = row;
@@ -86,8 +90,8 @@ public class MemoryGame {
             } else {
                 mistakes++;
                 timer = new Timer(500, e -> {
-                    buttons[row][col].setIcon(null);
-                    buttons[firstRow][firstCol].setIcon(null);
+                    buttons[row][col].setIcon(backIcon); // รีเซ็ตไอคอนกลับเป็นรูปหลังไพ่
+                    buttons[firstRow][firstCol].setIcon(backIcon); // รีเซ็ตไอคอนกลับเป็นรูปหลังไพ่
                     firstCardFlipped = false;
                     timer.stop();
                 });
@@ -114,19 +118,31 @@ public class MemoryGame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            JFrame menuFrame = new JFrame("Memory Game Menu");
+            menuFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            menuFrame.setSize(300, 300);
+            menuFrame.setLayout(new GridLayout(6, 1));
+
             String[] options = {"Easy (4x4)", "Normal (6x6)", "Hard (8x8)", "Nightmare (10x10)", "Ranks", "Exit"};
-            while (true) {
-                int choice = JOptionPane.showOptionDialog(null, "Select option:", "Memory Game Menu",
-                        JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-                if (choice == 5 || choice == JOptionPane.CLOSED_OPTION) {
-                    System.exit(0);
-                } else if (choice == 4) {
-                    showRanks();
-                } else {
-                    int size = 4 + (choice * 2);
-                    new MemoryGame(size, options[choice]);
-                }
+
+            for (int i = 0; i < options.length; i++) {
+                JButton button = new JButton(options[i]);
+                final int choice = i;
+                button.addActionListener(e -> {
+                    if (choice == 5) {
+                        System.exit(0);
+                    } else if (choice == 4) {
+                        showRanks();
+                    } else {
+                        int size = 4 + (choice * 2);
+                        new MemoryGame(size, options[choice]);
+                        menuFrame.dispose(); // ปิดเมนูหลังจากเริ่มเกม
+                    }
+                });
+                menuFrame.add(button);
             }
+
+            menuFrame.setVisible(true);
         });
     }
 
