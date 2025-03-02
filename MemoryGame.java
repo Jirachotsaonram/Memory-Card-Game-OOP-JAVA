@@ -1,5 +1,7 @@
 import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -15,16 +17,28 @@ public class MemoryGame {
     private int[][] board;
     private int firstRow = -1, firstCol = -1;
     private boolean firstCardFlipped = false;
+    private boolean isProcessing = false; // เพิ่มตัวแปร isProcessing
     private Timer timer;
     private int revealedPairs = 0;
     private int gridSize;
     private int mistakes = 0;
+    private int maxMistakes;
     private long startTime;
     private String difficulty;
+    private int rows; // ประกาศตัวแปร rows เป็นตัวแปรของคลาส
+    private int cols; // ประกาศตัวแปร cols เป็นตัวแปรของคลาส
+
+    private JLabel timeLabel;
+    private JLabel mistakesLabel;
+    private JLabel remainingMistakesLabel;
+    private JLabel correctPairsLabel;
 
     public MemoryGame(int rows, int cols, String level) {
+        this.rows = rows; // กำหนดค่าให้ตัวแปร rows
+        this.cols = cols; // กำหนดค่าให้ตัวแปร cols
         this.gridSize = rows * cols;
         this.difficulty = level;
+        this.maxMistakes = (gridSize / 2); // กำหนดค่าสูงสุดของจำนวนครั้งที่เปิดผิดเป็นครึ่งหนึ่งของจำนวนไพ่ทั้งหมด
         frame = new JFrame("Memory Game");
         panel = new JPanel(new GridLayout(rows, cols));
         buttons = new JButton[rows][cols];
@@ -34,6 +48,7 @@ public class MemoryGame {
         loadImages();
         setupBoard(rows, cols);
         startTime = System.currentTimeMillis();
+        startTimer();
     }
 
     private void loadImages() {
@@ -62,9 +77,20 @@ public class MemoryGame {
 
         frame.add(panel, BorderLayout.CENTER);
         
+        JPanel infoPanel = new JPanel(new GridLayout(1, 4));
+        timeLabel = new JLabel("Time: 0 sec");
+        mistakesLabel = new JLabel("Mistakes: 0");
+        remainingMistakesLabel = new JLabel("Remaining Mistakes: " + maxMistakes);
+        correctPairsLabel = new JLabel("Correct Pairs: 0");
+        infoPanel.add(timeLabel);
+        infoPanel.add(mistakesLabel);
+        infoPanel.add(remainingMistakesLabel);
+        infoPanel.add(correctPairsLabel);
+        frame.add(infoPanel, BorderLayout.NORTH);
+
         JPanel buttonPanel = new JPanel();
         JButton restartButton = new JButton("Return Game");
-        restartButton.addActionListener(e -> restartGame());
+        restartButton.addActionListener(e -> restartGame(rows, cols, difficulty));
         buttonPanel.add(restartButton);
 
         JButton backButton = new JButton("Back to Menu");
@@ -85,8 +111,16 @@ public class MemoryGame {
         frame.setVisible(true);
     }
 
+    private void startTimer() {
+        timer = new Timer(1000, e -> {
+            long elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
+            timeLabel.setText("Time: " + elapsedTime + " sec");
+        });
+        timer.start();
+    }
+
     private void revealCard(int row, int col) {
-        if (buttons[row][col].getIcon() != backIcon) return; // ตรวจสอบว่าการ์ดยังไม่ถูกเปิด
+        if (isProcessing || buttons[row][col].getIcon() != backIcon) return; // ตรวจสอบว่าการ์ดยังไม่ถูกเปิดและไม่อยู่ในระหว่างประมวลผล
 
         buttons[row][col].setIcon(images[board[row][col]]); // แสดงรูปการ์ด
 
@@ -95,37 +129,50 @@ public class MemoryGame {
             firstCol = col;
             firstCardFlipped = true;
         } else {
+            isProcessing = true; // เริ่มการประมวลผล
             if (board[row][col] == board[firstRow][firstCol]) {
                 revealedPairs++;
+                correctPairsLabel.setText("Correct Pairs: " + revealedPairs);
                 if (revealedPairs == (gridSize / 2)) {
                     long endTime = System.currentTimeMillis();
                     long elapsedTime = (endTime - startTime) / 1000;
-                    saveRank(elapsedTime);
+                    saveStat(elapsedTime, "Win");
                     JOptionPane.showMessageDialog(frame, "You win! Time: " + elapsedTime + " sec\nMistakes: " + mistakes);
+                    timer.stop();
                 }
+                isProcessing = false; // สิ้นสุดการประมวลผล
             } else {
                 mistakes++;
-                timer = new Timer(500, e -> {
+                mistakesLabel.setText("Mistakes: " + mistakes);
+                remainingMistakesLabel.setText("Remaining Mistakes: " + (maxMistakes - mistakes));
+                if (mistakes >= maxMistakes) {
+                    saveStat((System.currentTimeMillis() - startTime) / 1000, "Lose");
+                    JOptionPane.showMessageDialog(frame, "Game Over! You made too many mistakes.");
+                    timer.stop();
+                    restartGame(rows, cols, difficulty);
+                    return;
+                }
+                Timer flipBackTimer = new Timer(500, e -> {
                     buttons[row][col].setIcon(backIcon); // รีเซ็ตไอคอนกลับเป็นรูปหลังไพ่
                     buttons[firstRow][firstCol].setIcon(backIcon); // รีเซ็ตไอคอนกลับเป็นรูปหลังไพ่
                     firstCardFlipped = false;
-                    timer.stop();
+                    isProcessing = false; // สิ้นสุดการประมวลผล
                 });
-                timer.setRepeats(false);
-                timer.start();
+                flipBackTimer.setRepeats(false);
+                flipBackTimer.start();
             }
             firstCardFlipped = false;
         }
     }
 
-    private void restartGame() {
+    private void restartGame(int rows, int cols, String level) {
         frame.dispose();
-        showMenu();
+        new MemoryGame(rows, cols, level);
     }
 
-    private void saveRank(long time) {
-        try (FileWriter fw = new FileWriter("ranks.txt", true); BufferedWriter bw = new BufferedWriter(fw)) {
-            bw.write(difficulty + "," + time + "," + mistakes + "," + new Date());
+    private void saveStat(long time, String status) {
+        try (FileWriter fw = new FileWriter("Stats.txt", true); BufferedWriter bw = new BufferedWriter(fw)) {
+            bw.write(difficulty + "," + time + "," + mistakes + "," + revealedPairs + "," + new Date() + "," + status);
             bw.newLine();
         } catch (IOException e) {
             e.printStackTrace();
@@ -138,14 +185,16 @@ public class MemoryGame {
         menuFrame.setSize(300, 300);
         menuFrame.setLayout(new GridLayout(6, 1));
 
-        String[] options = {"Easy (4x4)", "Normal (6x6)", "Hard (6x11)", "Nightmare (6x17)", "Ranks", "Exit"};
+        String[] options = {"Easy (4x4)", "Normal (6x6)", "Hard (6x11)", "Nightmare (6x17)", "Stats", "Exit"};
 
         for (int i = 0; i < options.length; i++) {
             JButton button = new JButton(options[i]);
             final int choice = i;
             button.addActionListener(e -> {
-                 if (choice == 4) {
-                    showRankMenu();
+                if (choice == 4) {
+                    showStatsMenu();
+                } else if (choice == 5) {
+                    System.exit(0); // ปิดโปรแกรมเมื่อกดปุ่ม Exit
                 } else {
                     int rows = 4 + (choice * 2);
                     int cols = 4 + (choice * 2);
@@ -166,61 +215,85 @@ public class MemoryGame {
         menuFrame.setVisible(true);
     }
 
-    private static void showRankMenu() {
-        JFrame rankFrame = new JFrame("Rankings Menu");
-        rankFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        rankFrame.setSize(300, 300);
-        rankFrame.setLayout(new GridLayout(5, 1));
+    private static void showStatsMenu() {
+        JFrame statsFrame = new JFrame("Statistics Menu");
+        statsFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        statsFrame.setSize(300, 300);
+        statsFrame.setLayout(new GridLayout(5, 1));
 
-        String[] rankOptions = {"Rank Easy", "Rank Normal", "Rank Hard", "Rank Nightmare", "Back to Menu"};
+        String[] statsOptions = {"Stats Easy", "Stats Normal", "Stats Hard", "Stats Nightmare", "Back to Menu"};
 
-        for (int i = 0; i < rankOptions.length; i++) {
-            JButton button = new JButton(rankOptions[i]);
+        for (int i = 0; i < statsOptions.length; i++) {
+            JButton button = new JButton(statsOptions[i]);
             final int choice = i;
             button.addActionListener(e -> {
                 if (choice == 4) {
-                    rankFrame.dispose();
+                    statsFrame.dispose();
                     showMenu();
                 } else {
-                    String difficulty = rankOptions[choice].replace("Rank ", "");
-                    showRanksByDifficulty(difficulty);
+                    String difficulty = statsOptions[choice].replace("Stats ", "");
+                    showStatsByDifficulty(difficulty);
                 }
             });
-            rankFrame.add(button);
+            statsFrame.add(button);
         }
 
-        rankFrame.setVisible(true);
+        statsFrame.setVisible(true);
     }
 
-    private static void showRanksByDifficulty(String difficulty) {
-        StringBuilder ranks = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new FileReader("ranks.txt"))) {
+    private static void showStatsByDifficulty(String difficulty) {
+        String[] columnNames = {"Difficulty", "Time(s)", "Mistakes", "Correct Pairs", "Date", "Status"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+
+        try (BufferedReader br = new BufferedReader(new FileReader("Stats.txt"))) {
             String line;
             while ((line = br.readLine()) != null) {
                 if (line.startsWith(difficulty)) {
-                    ranks.append(line).append("\n");
+                    String[] data = line.split(",");
+                    model.addRow(data);
                 }
             }
         } catch (IOException e) {
-            ranks.append("No rankings yet.");
+            e.printStackTrace();
         }
-        JOptionPane.showMessageDialog(null, ranks.toString(), difficulty + " Rankings", JOptionPane.INFORMATION_MESSAGE);
+
+        JTable table = new JTable(model);
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        table.setRowSorter(sorter);
+
+        // กำหนดตัวเปรียบเทียบสำหรับคอลัมน์ที่ต้องการเรียงลำดับ
+        sorter.setComparator(0, Comparator.comparing(String::toString)); // Difficulty
+        sorter.setComparator(1, Comparator.comparingInt(o -> Integer.parseInt(o.toString()))); // Time(s)
+        sorter.setComparator(2, Comparator.comparingInt(o -> Integer.parseInt(o.toString()))); // Mistakes
+        sorter.setComparator(3, Comparator.comparingInt(o -> Integer.parseInt(o.toString()))); // Correct Pairs
+        sorter.setComparator(4, Comparator.comparing(String::toString)); // Date
+        sorter.setComparator(5, Comparator.comparing(String::toString)); // Status
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        JOptionPane.showMessageDialog(null, scrollPane, difficulty + " Statistics", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(MemoryGame::showMenu);
     }
 
-    private static void showRanks() {
-        StringBuilder ranks = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new FileReader("ranks.txt"))) {
+    private static void showStats() {
+        String[] columnNames = {"Date", "Difficulty", "Mistakes", "Correct Pairs", "Time(s)", "Status"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+
+        try (BufferedReader br = new BufferedReader(new FileReader("Stats.txt"))) {
             String line;
             while ((line = br.readLine()) != null) {
-                ranks.append(line).append("\n");
+                String[] data = line.split(",");
+                model.addRow(data);
             }
         } catch (IOException e) {
-            ranks.append("No rankings yet.");
+            e.printStackTrace();
         }
-        JOptionPane.showMessageDialog(null, ranks.toString(), "Rankings", JOptionPane.INFORMATION_MESSAGE);
+
+        JTable table = new JTable(model);
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        JOptionPane.showMessageDialog(null, scrollPane, "Statistics", JOptionPane.INFORMATION_MESSAGE);
     }
 }
