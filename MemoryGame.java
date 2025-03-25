@@ -2,9 +2,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
-
 import java.awt.*;
-import java.awt.event.*;
 import java.util.*;
 import java.io.*;
 
@@ -27,7 +25,6 @@ public class MemoryGame {
     private String difficulty;
     private int rows; // ประกาศตัวแปร rows เป็นตัวแปรของคลาส
     private int cols; // ประกาศตัวแปร cols เป็นตัวแปรของคลาส
-
     private JLabel timeLabel;
     private JLabel mistakesLabel;
     private JLabel remainingMistakesLabel;
@@ -80,7 +77,7 @@ public class MemoryGame {
         JPanel infoPanel = new JPanel(new GridLayout(1, 4));
         timeLabel = new JLabel("Time: 0 sec");
         mistakesLabel = new JLabel("Mistakes: 0");
-        remainingMistakesLabel = new JLabel("Remaining Mistakes: " + maxMistakes);
+        remainingMistakesLabel = new JLabel("Mistakes Left: " + maxMistakes);
         correctPairsLabel = new JLabel("Correct Pairs: 0");
         infoPanel.add(timeLabel);
         infoPanel.add(mistakesLabel);
@@ -106,7 +103,6 @@ public class MemoryGame {
         int frameWidth = cols * 100 + 50;
         int frameHeight = rows * 100 + 150;
         frame.setSize(frameWidth, frameHeight);
-
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
@@ -144,7 +140,7 @@ public class MemoryGame {
             } else {
                 mistakes++;
                 mistakesLabel.setText("Mistakes: " + mistakes);
-                remainingMistakesLabel.setText("Remaining Mistakes: " + (maxMistakes - mistakes));
+                remainingMistakesLabel.setText("Mistakes Left: " + (maxMistakes - mistakes));
                 if (mistakes >= maxMistakes) {
                     saveStat((System.currentTimeMillis() - startTime) / 1000, "Lose");
                     JOptionPane.showMessageDialog(frame, "Game Over! You made too many mistakes.");
@@ -185,7 +181,7 @@ public class MemoryGame {
         menuFrame.setSize(300, 300);
         menuFrame.setLayout(new GridLayout(6, 1));
 
-        String[] options = {"Easy (4x4)", "Normal (6x6)", "Hard (6x11)", "Nightmare (6x17)", "Stats", "Exit"};
+        String[] options = {"Easy (4x4)", "Normal (6x6)", "Hard (6x11)", "Nightmare (6x17)", "Statistics", "Exit"};
 
         for (int i = 0; i < options.length; i++) {
             JButton button = new JButton(options[i]);
@@ -193,6 +189,7 @@ public class MemoryGame {
             button.addActionListener(e -> {
                 if (choice == 4) {
                     showStatsMenu();
+                    menuFrame.dispose(); // ปิดเมนูหลังจากเริ่มเมนูสถิติ
                 } else if (choice == 5) {
                     System.exit(0); // ปิดโปรแกรมเมื่อกดปุ่ม Exit
                 } else {
@@ -221,7 +218,7 @@ public class MemoryGame {
         statsFrame.setSize(300, 300);
         statsFrame.setLayout(new GridLayout(5, 1));
 
-        String[] statsOptions = {"Stats Easy", "Stats Normal", "Stats Hard", "Stats Nightmare", "Back to Menu"};
+        String[] statsOptions = {"Statistics Easy", "Statistics Normal", "Statistics Hard", "Statistics Nightmare", "Back to Menu"};
 
         for (int i = 0; i < statsOptions.length; i++) {
             JButton button = new JButton(statsOptions[i]);
@@ -231,7 +228,7 @@ public class MemoryGame {
                     statsFrame.dispose();
                     showMenu();
                 } else {
-                    String difficulty = statsOptions[choice].replace("Stats ", "");
+                    String difficulty = statsOptions[choice].replace("Statistics ", "");
                     showStatsByDifficulty(difficulty);
                 }
             });
@@ -275,25 +272,5 @@ public class MemoryGame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(MemoryGame::showMenu);
-    }
-
-    private static void showStats() {
-        String[] columnNames = {"Date", "Difficulty", "Mistakes", "Correct Pairs", "Time(s)", "Status"};
-        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
-
-        try (BufferedReader br = new BufferedReader(new FileReader("Stats.txt"))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] data = line.split(",");
-                model.addRow(data);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        JTable table = new JTable(model);
-
-        JScrollPane scrollPane = new JScrollPane(table);
-        JOptionPane.showMessageDialog(null, scrollPane, "Statistics", JOptionPane.INFORMATION_MESSAGE);
     }
 }

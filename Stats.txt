@@ -1,3 +1,8 @@
 Easy (4x4),18,5,8,Sun Mar 02 14:23:06 ICT 2025,Win
 Easy (4x4),10,8,0,Sun Mar 02 14:28:19 ICT 2025,Lose
 Easy (4x4),15,8,4,Sun Mar 02 14:48:13 ICT 2025,Lose
+Easy (4x4),22,8,0,Tue Mar 25 20:31:48 ICT 2025,Lose
+Easy (4x4),28,7,8,Tue Mar 25 20:36:37 ICT 2025,Win
+Easy (4x4),50,8,0,Tue Mar 25 20:46:15 ICT 2025,Lose
+Normal (6x6),34,18,3,Tue Mar 25 20:55:40 ICT 2025,Lose
+Nightmare (6x17),89,51,1,Tue Mar 25 20:59:52 ICT 2025,Lose
