@@ -84,7 +84,7 @@ public class MemoryGame {
         infoPanel.add(remainingMistakesLabel);
         infoPanel.add(correctPairsLabel);
         frame.add(infoPanel, BorderLayout.NORTH);
-
+        
         JPanel buttonPanel = new JPanel();
         JButton restartButton = new JButton("Return Game");
         restartButton.addActionListener(e -> restartGame(rows, cols, difficulty));
@@ -179,8 +179,11 @@ public class MemoryGame {
         JFrame menuFrame = new JFrame("Memory Game Menu");
         menuFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         menuFrame.setSize(300, 300);
-        menuFrame.setLayout(new GridLayout(6, 1));
-
+        menuFrame.setLayout(new GridLayout(7, 1));
+        JLabel Namegaem = new JLabel("Memory Game");
+        Namegaem.setFont(new Font("Arial", Font.BOLD, 20));
+        Namegaem.setHorizontalAlignment(SwingConstants.CENTER);
+        menuFrame.add(Namegaem, BorderLayout.NORTH);
         String[] options = {"Easy (4x4)", "Normal (6x6)", "Hard (6x11)", "Nightmare (6x17)", "Statistics", "Exit"};
 
         for (int i = 0; i < options.length; i++) {
