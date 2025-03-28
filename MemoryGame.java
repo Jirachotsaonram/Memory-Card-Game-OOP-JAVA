@@ -30,6 +30,8 @@ public class MemoryGame {
     private JLabel remainingMistakesLabel;
     private JLabel correctPairsLabel;
 
+
+    // สร้างคอนสตรักเตอร์ที่รับพารามิเตอร์เพื่อกำหนดขนาดของกริดและระดับความยาก
     public MemoryGame(int rows, int cols, String level) {
         this.rows = rows; // กำหนดค่าให้ตัวแปร rows
         this.cols = cols; // กำหนดค่าให้ตัวแปร cols
@@ -48,12 +50,16 @@ public class MemoryGame {
         startTimer();
     }
 
+
+    // โหลดรูปภาพจากไฟล์และปรับขนาดรูปภาพ
     private void loadImages() {
         for (int i = 0; i < images.length; i++) {
             images[i] = new ImageIcon(new ImageIcon("img/" + (i + 1) + ".png").getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH)); // โหลดและปรับขนาดรูปภาพ
         }
     }
 
+
+    // สร้างกริดของการ์ดและตั้งค่าเริ่มต้น
     private void setupBoard(int rows, int cols) {
         ArrayList<Integer> cardList = new ArrayList<>();
         for (int i = 0; i < gridSize / 2; i++) {
@@ -107,6 +113,8 @@ public class MemoryGame {
         frame.setVisible(true);
     }
 
+
+    // สร้างเมธอดสำหรับเริ่มต้นการนับเวลา
     private void startTimer() {
         timer = new Timer(1000, e -> {
             long elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
@@ -115,6 +123,8 @@ public class MemoryGame {
         timer.start();
     }
 
+
+    // สร้างเมธอดสำหรับเปิดการ์ด
     private void revealCard(int row, int col) {
         if (isProcessing || buttons[row][col].getIcon() != backIcon) return; // ตรวจสอบว่าการ์ดยังไม่ถูกเปิดและไม่อยู่ในระหว่างประมวลผล
 
@@ -161,11 +171,15 @@ public class MemoryGame {
         }
     }
 
+
+    // สร้างเมธอดสำหรับเริ่มเกมใหม่
     private void restartGame(int rows, int cols, String level) {
         frame.dispose();
         new MemoryGame(rows, cols, level);
     }
+    
 
+    // สร้างเมธอดสำหรับบันทึกสถิติ
     private void saveStat(long time, String status) {
         try (FileWriter fw = new FileWriter("Stats.txt", true); BufferedWriter bw = new BufferedWriter(fw)) {
             bw.write(difficulty + "," + time + "," + mistakes + "," + revealedPairs + "," + new Date() + "," + status);
@@ -175,6 +189,8 @@ public class MemoryGame {
         }
     }
 
+
+    // สร้างเมธอดสำหรับแสดงเมนู
     private static void showMenu() {
         JFrame menuFrame = new JFrame("Memory Game Menu");
         menuFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -215,6 +231,8 @@ public class MemoryGame {
         menuFrame.setVisible(true);
     }
 
+
+    // สร้างเมธอดสำหรับแสดงเมนูสถิติ
     private static void showStatsMenu() {
         JFrame statsFrame = new JFrame("Statistics Menu");
         statsFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -241,6 +259,8 @@ public class MemoryGame {
         statsFrame.setVisible(true);
     }
 
+
+    // สร้างเมธอดสำหรับแสดงสถิติตามระดับความยาก
     private static void showStatsByDifficulty(String difficulty) {
         String[] columnNames = {"Difficulty", "Time(s)", "Mistakes", "Correct Pairs", "Date", "Status"};
         DefaultTableModel model = new DefaultTableModel(columnNames, 0);
@@ -273,6 +293,8 @@ public class MemoryGame {
         JOptionPane.showMessageDialog(null, scrollPane, difficulty + " Statistics", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    
+    // สร้างเมธอด main สำหรับเริ่มเกม
     public static void main(String[] args) {
         SwingUtilities.invokeLater(MemoryGame::showMenu);
     }
