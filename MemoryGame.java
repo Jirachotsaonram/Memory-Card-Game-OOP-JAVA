@@ -77,9 +77,7 @@ public class MemoryGame {
                 panel.add(buttons[i][j]);
             }
         }
-
         frame.add(panel, BorderLayout.CENTER);
-        
         JPanel infoPanel = new JPanel(new GridLayout(1, 4));
         timeLabel = new JLabel("Time: 0 sec");
         mistakesLabel = new JLabel("Mistakes: 0");
@@ -90,21 +88,17 @@ public class MemoryGame {
         infoPanel.add(remainingMistakesLabel);
         infoPanel.add(correctPairsLabel);
         frame.add(infoPanel, BorderLayout.NORTH);
-        
         JPanel buttonPanel = new JPanel();
         JButton restartButton = new JButton("Return Game");
         restartButton.addActionListener(e -> restartGame(rows, cols, difficulty));
         buttonPanel.add(restartButton);
-
         JButton backButton = new JButton("Back to Menu");
         backButton.addActionListener(e -> {
             frame.dispose();
             showMenu();
         });
         buttonPanel.add(backButton);
-
         frame.add(buttonPanel, BorderLayout.SOUTH);
-
         // คำนวณขนาดของเฟรมตามขนาดของกริด
         int frameWidth = cols * 100 + 50;
         int frameHeight = rows * 100 + 150;
